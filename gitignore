@@ -1,0 +1,141 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# AI-Driven Agricultural Field Monitoring System
+# Git Ignore File
+# ═══════════════════════════════════════════════════════════════════════════
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CREDENTIALS & SECRETS (CRITICAL - NEVER COMMIT)
+# ─────────────────────────────────────────────────────────────────────────────
+credentials/
+*.json
+!package.json
+.env
+.env.*
+*.pem
+*.key
+secrets/
+config.local.py
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MODEL FILES (Large files - use Git LFS or download separately)
+# ─────────────────────────────────────────────────────────────────────────────
+models/
+*.pth
+*.pt
+*.h5
+*.pkl
+*.joblib
+*.onnx
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PYTHON
+# ─────────────────────────────────────────────────────────────────────────────
+# Virtual environment
+venv/
+env/
+.venv/
+.env/
+ENV/
+
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ─────────────────────────────────────────────────────────────────────────────
+# JUPYTER NOTEBOOKS
+# ─────────────────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ─────────────────────────────────────────────────────────────────────────────
+# IDE / EDITORS
+# ─────────────────────────────────────────────────────────────────────────────
+# VS Code
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OS GENERATED
+# ─────────────────────────────────────────────────────────────────────────────
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PROJECT SPECIFIC
+# ─────────────────────────────────────────────────────────────────────────────
+# Output files
+outputs/
+logs/
+*.log
+temp/
+tmp/
+
+# Data files (if any large datasets)
+data/
+*.csv
+*.tif
+*.tiff
+!sample_data/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Test outputs
+test_outputs/
+coverage/
+.coverage
+htmlcov/
+.pytest_cache/
