@@ -82,7 +82,7 @@ def render_classification_results(result: Dict) -> None:
     with col2:
         st.markdown("##### ℹ️ Model Info")
         st.markdown(f"""
-        <div style="background: #f5f5f5; padding: 15px; border-radius: 10px;">
+        <div style="background: #f5f5f5;color: #000000; padding: 15px; border-radius: 10px;">
             <p style="margin: 5px 0;"><strong>Model:</strong> {model_used}</p>
             <p style="margin: 5px 0;"><strong>Data:</strong> {months_available}/6 months</p>
             <p style="margin: 5px 0;"><strong>Quality:</strong> {_get_quality_label(months_available)}</p>
@@ -192,7 +192,7 @@ def render_health_results(result: Dict) -> None:
         st.markdown("##### 📈 Interpretation")
         
         st.markdown(f"""
-        <div style="background: #f8f9fa; padding: 15px; border-radius: 10px;">
+        <div style="background: #f8f9fa;color: #000000; padding: 15px; border-radius: 10px;">
             <p style="margin: 0 0 10px 0;">
                 <strong>NDVI Value:</strong> {ndvi:.3f}
             </p>
