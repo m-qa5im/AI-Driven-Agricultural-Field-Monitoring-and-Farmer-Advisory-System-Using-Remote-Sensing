@@ -4,7 +4,7 @@
 # ╚═══════════════════════════════════════════════════════════════════════════╝
 
 import os
-from datetime import datetime
+from datetime import datetime, date
 from typing import Dict, List, Tuple
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -57,6 +57,49 @@ class ModelConfig:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# DATE RANGE CONFIGURATION
+# ─────────────────────────────────────────────────────────────────────────────
+
+class DateConfig:
+    """Date range and temporal settings."""
+    
+    # Minimum date for data availability (Sentinel-2 reliable data)
+    MIN_DATE = date(2022, 4, 1)  # April 2022
+    
+    # Maximum date (today)
+    @classmethod
+    def get_max_date(cls) -> date:
+        """Get maximum date (today)."""
+        return date.today()
+    
+    @classmethod
+    def get_min_date(cls) -> date:
+        """Get minimum date."""
+        return cls.MIN_DATE
+    
+    @classmethod
+    def is_valid_date(cls, check_date: date) -> Tuple[bool, str]:
+        """
+        Check if date is within valid range.
+        
+        Returns:
+            Tuple of (is_valid, message)
+        """
+        if check_date < cls.MIN_DATE:
+            return False, f"Date must be after {cls.MIN_DATE.strftime('%B %Y')}"
+        
+        if check_date > date.today():
+            return False, "Date cannot be in the future"
+        
+        return True, "Valid date"
+    
+    @classmethod
+    def get_available_years(cls) -> List[int]:
+        """Get list of available years for analysis."""
+        return list(range(cls.MIN_DATE.year, date.today().year + 1))
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # TEMPORAL CONFIGURATION
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -64,7 +107,7 @@ class TemporalConfig:
     """Crop seasons and temporal settings for Pakistan."""
     
     # Month names for each season
-    RICE_MONTHS = ['May', 'Jun', 'Aug', 'Sep', 'Oct', 'Nov']
+    RICE_MONTHS = ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct']  # Updated: Jul instead of Aug twice
     WHEAT_MONTHS = ['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr']
     
     # Month to index mapping
@@ -76,14 +119,16 @@ class TemporalConfig:
     # Growing seasons (month numbers)
     RICE_SEASON = {
         'start': 5,   # May
-        'end': 11,    # November
+        'end': 10,    # October
         'peak': 9,    # September (flowering)
+        'months': [5, 6, 7, 8, 9, 10],  # May to October
     }
     
     WHEAT_SEASON = {
         'start': 11,  # November
         'end': 4,     # April
         'peak': 3,    # March (heading)
+        'months': [11, 12, 1, 2, 3, 4],  # November to April
     }
     
     # Growth stages by month
@@ -94,7 +139,6 @@ class TemporalConfig:
         8: 'Tillering / Panicle Initiation',
         9: 'Flowering / Grain Filling',
         10: 'Grain Filling / Maturity',
-        11: 'Harvesting',
     }
     
     WHEAT_GROWTH_STAGES = {
@@ -110,7 +154,15 @@ class TemporalConfig:
     def get_current_season(cls) -> str:
         """Determine current growing season based on date."""
         month = datetime.now().month
-        if 5 <= month <= 11:
+        if month in cls.RICE_SEASON['months']:
+            return 'Rice'
+        else:
+            return 'Wheat'
+    
+    @classmethod
+    def get_season_for_month(cls, month: int) -> str:
+        """Determine season for a specific month."""
+        if month in cls.RICE_SEASON['months']:
             return 'Rice'
         else:
             return 'Wheat'
@@ -123,6 +175,81 @@ class TemporalConfig:
         elif crop == 'Wheat':
             return cls.WHEAT_GROWTH_STAGES.get(month, 'Off-season')
         return 'Unknown'
+    
+    @classmethod
+    def get_valid_crops_for_season(cls, month: int) -> List[str]:
+        """
+        Get valid crop classes for a given month/season.
+        
+        Args:
+            month: Month number (1-12)
+            
+        Returns:
+            List of valid crop classes for classification
+        """
+        if month in cls.RICE_SEASON['months']:
+            # Rice season: Can classify Rice or Other (NOT Wheat)
+            return ['Rice', 'Other']
+        else:
+            # Wheat season: Can classify Wheat or Other (NOT Rice)
+            return ['Wheat', 'Other']
+    
+    @classmethod
+    def is_crop_valid_for_season(cls, crop: str, month: int) -> Tuple[bool, str]:
+        """
+        Check if a crop classification is valid for the given season.
+        
+        Args:
+            crop: Predicted crop class
+            month: Month of analysis
+            
+        Returns:
+            Tuple of (is_valid, reason_message)
+        """
+        valid_crops = cls.get_valid_crops_for_season(month)
+        season = cls.get_season_for_month(month)
+        
+        if crop in valid_crops:
+            return True, f"{crop} is valid for {season} season"
+        else:
+            return False, f"{crop} cannot be grown during {season} season (Month: {month})"
+    
+    @classmethod
+    def get_season_info(cls, month: int = None) -> Dict:
+        """
+        Get detailed season information.
+        
+        Args:
+            month: Month number (default: current month)
+            
+        Returns:
+            Dictionary with season details
+        """
+        if month is None:
+            month = datetime.now().month
+        
+        season = cls.get_season_for_month(month)
+        
+        if season == 'Rice':
+            return {
+                'name': 'Rice (Kharif)',
+                'season': 'Rice',
+                'months': 'May - October',
+                'valid_crops': ['Rice', 'Other'],
+                'invalid_crops': ['Wheat'],
+                'icon': '🌾',
+                'color': '#27ae60',
+            }
+        else:
+            return {
+                'name': 'Wheat (Rabi)',
+                'season': 'Wheat',
+                'months': 'November - April',
+                'valid_crops': ['Wheat', 'Other'],
+                'invalid_crops': ['Rice'],
+                'icon': '🌿',
+                'color': '#f39c12',
+            }
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -145,7 +272,7 @@ class GEEConfig:
     }
     
     # Cloud masking
-    CLOUD_FILTER_PERCENT = 31  # Max cloud cover percentage
+    CLOUD_FILTER_PERCENT = 50  # Max cloud cover percentage
     
     # Scale (resolution in meters)
     SCALE = 10  # Sentinel-2 resolution
@@ -209,11 +336,6 @@ class HealthConfig:
             'healthy_min': 0.40,
             'stress_threshold': 0.30,
             'expected_range': (0.35, 0.55),
-        },
-        'Harvesting': {
-            'healthy_min': 0.25,
-            'stress_threshold': 0.15,
-            'expected_range': (0.20, 0.40),
         },
     }
     
@@ -440,9 +562,9 @@ class UIConfig:
     """User interface settings."""
     
     # App metadata
-    APP_TITLE = "🌾 Agriculture Field Monitoring and Farmer Advisory System"
+    APP_TITLE = "🌾 AI-Driven Agricultural Field Monitoring and Farmer Advisory System"
     APP_SUBTITLE = "AI-Powered Agricultural Monitoring for Pakistan using Remote Sensing"
-    APP_VERSION = "1.0.0"
+    APP_VERSION = "1.0.0"  # Updated version
     
     # Map settings
     DEFAULT_CENTER = [31.5, 73.0]  # Punjab center
@@ -485,6 +607,7 @@ class LogConfig:
 __all__ = [
     'PathConfig',
     'ModelConfig', 
+    'DateConfig',
     'TemporalConfig',
     'GEEConfig',
     'HealthConfig',

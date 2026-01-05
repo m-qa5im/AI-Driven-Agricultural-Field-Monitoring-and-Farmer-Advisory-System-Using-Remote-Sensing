@@ -1,4 +1,5 @@
 # App components module
+"""
 from .input_form import render_input_form, render_sidebar_info
 from .map_view import render_result_map, render_ndvi_indicator, render_data_availability
 from .results_display import (
@@ -9,3 +10,4 @@ from .results_display import (
     render_error_state,
     render_no_data_state,
 )
+"""
