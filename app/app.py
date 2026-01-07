@@ -1564,6 +1564,8 @@ with right_col:
                                 explanation = advisor.explain_weekly_plan(plan)
                                 
                                 if explanation:
+                                    formatted_explanation = explanation.replace("\n", "<br>")
+
                                     # ✅ CORRECTED BOX WITH FONT IMPORTED
                                     st.markdown(f"""
                                     <div style="background: #f8fafc; 
@@ -1577,7 +1579,7 @@ with right_col:
                                                 text-align: right; 
                                                 direction: rtl; 
                                                 color: #1e293b;">
-                                        {explanation.replace('\n', '<br>')}
+                                         {formatted_explanation}
                                     </div>
                                     """, unsafe_allow_html=True)
                                     
