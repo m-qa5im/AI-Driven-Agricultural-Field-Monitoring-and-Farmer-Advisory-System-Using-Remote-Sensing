@@ -1,6 +1,5 @@
 # ╔═══════════════════════════════════════════════════════════════════════════╗
-# ║  PAKISTAN CROP MONITORING SYSTEM - Production UI (Light Theme)             ║
-# ║  AI-Driven Agricultural Field Monitoring and Farmer Advisory System        ║
+# ║  AI-Driven Agricultural Field Monitoring and Farmer Advisory System       ║
 # ╚═══════════════════════════════════════════════════════════════════════════╝
 
 import streamlit as st
@@ -33,19 +32,40 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    /* Ensure sidebar toggle button is always visible */
-    [data-testid="collapsedControl"] {
-        display: block !important;
+    /* 1. Sab se pehle header ki visibility enable karein taake button nazar aaye */
+    header {
         visibility: visible !important;
-        opacity: 1 !important;
+        background: transparent !important; /* Header ka background transparent rakhein */
     }
-    
-    /* Make toggle button more prominent when sidebar is collapsed */
-    section[data-testid="stSidebar"][aria-expanded="false"] + div [data-testid="collapsedControl"] {
-        background: linear-gradient(135deg, #22c55e, #16a34a) !important;
-        padding: 8px !important;
-        border-radius: 8px !important;
-        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4) !important;
+
+    /* 2. Streamlit ke default header elements ko hide karein (sirf button chorr kar) */
+    header [data-testid="stHeaderActionElements"] {
+        display: none !important;
+    }
+
+    /* 3. Toggle button (collapsedControl) ko force-show karein */
+    [data-testid="collapsedControl"] {
+        display: flex !important;
+        visibility: visible !important;
+        z-index: 999999 !important;
+        background-color: #22c55e !important; /* Green Color */
+        border-radius: 0 8px 8px 0 !important;
+        left: 0 !important;
+        top: 10px !important;
+        width: 45px !important;
+        height: 40px !important;
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.3) !important;
+    }
+
+    /* 4. Icon ka rang safaid (white) karein taake dark theme par nazar aaye */
+    [data-testid="collapsedControl"] svg {
+        fill: white !important;
+        color: white !important;
+    }
+
+    /* 5. Main content ko thora neeche karein taake button ke saath takraye nahi */
+    .main .block-container {
+        padding-top: 4rem !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -757,7 +777,7 @@ with st.sidebar:
     
     st.markdown("""
     <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center;">
-        <div style="color: #9ca3af; font-size: 11px;">Version 2.0.0</div>
+        <div style="color: #9ca3af; font-size: 11px;">Version 1.0.0</div>
         <div style="color: #9ca3af; font-size: 10px; margin-top: 4px;">Powered by Sentinel-2</div>
     </div>
     """, unsafe_allow_html=True)
