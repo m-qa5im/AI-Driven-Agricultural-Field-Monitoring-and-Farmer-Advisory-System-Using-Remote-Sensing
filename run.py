@@ -49,7 +49,7 @@ def check_files():
         'src/advisory_system.py': 'Advisory System module',
         'src/weather_service.py': 'Weather Service module',
         'src/weekly_planner.py': 'Weekly Planner module',
-        'src/gemini-advisor.py': 'Gemini Advisor module',
+        'src/gemini_advisor.py': 'Gemini Advisor module',
         'app/app.py': 'Main application',
     }
     
