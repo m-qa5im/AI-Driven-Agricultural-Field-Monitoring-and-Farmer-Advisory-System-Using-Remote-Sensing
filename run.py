@@ -1,19 +1,7 @@
-#!/usr/bin/env python3
 # ╔═══════════════════════════════════════════════════════════════════════════╗
 # ║  AI-DRIVEN AGRICULTURAL FIELD MONITORING AND FARMER ADVISORY SYSTEM        ║
 # ║  Application Entry Point                                                   ║
 # ╚═══════════════════════════════════════════════════════════════════════════╝
-
-"""
-Run the Streamlit application.
-
-Usage:
-    python run.py
-    
-Or directly:
-    streamlit run app/app.py
-"""
-
 import os
 import sys
 import subprocess
@@ -59,6 +47,9 @@ def check_files():
         'src/model_inference.py': 'Model Inference module',
         'src/health_assessment.py': 'Health Assessment module',
         'src/advisory_system.py': 'Advisory System module',
+        'src/weather_service.py': 'Weather Service module',
+        'src/weekly_planner.py': 'Weekly Planner module',
+        'src/gemini-advisor.py': 'Gemini Advisor module',
         'app/app.py': 'Main application',
     }
     
@@ -123,7 +114,7 @@ def main():
             sys.executable, "-m", "streamlit", "run",
             str(app_path),
             "--server.headless", "true",
-            "--browser.gatherUsageStats", "false",
+            "--browser.gatherUsageStats", "true",
         ])
     except KeyboardInterrupt:
         print("\n\n👋 Application stopped.")
