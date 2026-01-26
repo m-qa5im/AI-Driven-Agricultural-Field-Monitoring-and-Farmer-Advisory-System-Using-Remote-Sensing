@@ -1,7 +1,7 @@
 # ╔═══════════════════════════════════════════════════════════════════════════╗
-# ║  FILE 1: gemini_advisor.py                                                ║
+# ║  FILE: gemini_advisor.py                                                  ║
 # ║  Location: src/gemini_advisor.py                                          ║
-# ║  COMPLETE & READY TO USE - Just copy-paste this entire file               ║
+# ║  STATUS: FIXED for google-genai (New SDK)                                 ║
 # ╚═══════════════════════════════════════════════════════════════════════════╝
 
 import os
@@ -10,23 +10,26 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# ─────────────────────────────────────────────────────────────────────────────
+# IMPORTING THE NEW SDK
+# ─────────────────────────────────────────────────────────────────────────────
 try:
-    import google.generativeai as genai
+    from google import genai
     GENAI_AVAILABLE = True
 except ImportError:
     GENAI_AVAILABLE = False
-    print("⚠️ google-generativeai not installed. Run: pip install google-generativeai")
+    print("⚠️ google-genai not installed. Run: pip install google-genai")
 
 
 class GeminiAdvisor:
-    """Gemini AI advisor for generating concise Urdu explanations"""
+    """Gemini AI advisor for generating concise Urdu explanations using the New SDK"""
     
     def __init__(self, api_key: Optional[str] = None):
         self.initialized = False
-        self.model = None
+        self.client = None  # Renamed from 'model' to 'client' for new SDK
         
         if not GENAI_AVAILABLE:
-            print("❌ Gemini not available")
+            print("❌ Gemini SDK not available")
             return
         
         self.api_key = api_key or os.getenv('GEMINI_API_KEY')
@@ -36,8 +39,8 @@ class GeminiAdvisor:
             return
         
         try:
-            genai.configure(api_key=self.api_key)
-            self.model = genai.GenerativeModel('gemini-2.5-flash')
+            # ✅ NEW SDK INITIALIZATION
+            self.client = genai.Client(api_key=self.api_key)
             self.initialized = True
             print("✅ Gemini AI initialized (gemini-2.5-flash)")
         except Exception as e:
@@ -92,7 +95,11 @@ class GeminiAdvisor:
 
 یاد رکھیں: مختصر، سادہ، اور عملی رہیں۔ پیچیدہ الفاظ استعمال نہ کریں۔
 """
-            response = self.model.generate_content(prompt)
+            # ✅ NEW SDK GENERATION CALL
+            response = self.client.models.generate_content(
+                model='gemini-2.5-flash', 
+                contents=prompt
+            )
             return response.text if response and response.text else None
             
         except Exception as e:
@@ -102,7 +109,7 @@ class GeminiAdvisor:
             return None
     
     def explain_weekly_plan(self, weekly_plan: Dict) -> Optional[str]:
-        """Generate CONCISE Urdu explanation (200-250 words) - FIXED VERSION"""
+        """Generate CONCISE Urdu explanation (200-250 words)"""
         if not self.initialized:
             return None
         
@@ -113,17 +120,14 @@ class GeminiAdvisor:
             fertilizer_summary = weekly_plan.get('fertilizer_summary', {})
             schedule = weekly_plan.get('schedule', [])
             
-            # ✅ FIX: Safe schedule text building with None checks
             schedule_lines = []
             for i, day in enumerate(schedule[:7]):
                 day_name = day.get('day_name', f'Day {i+1}')
                 
-                # Safe irrigation recommendation
                 irrigation_rec = 'کوئی نہیں'
                 if day.get('irrigation') and isinstance(day['irrigation'], dict):
                     irrigation_rec = day['irrigation'].get('recommendation', 'کوئی نہیں')
                 
-                # Safe fertilizer recommendation
                 fertilizer_rec = 'کوئی نہیں'
                 if day.get('fertilizer') and isinstance(day['fertilizer'], dict):
                     fertilizer_rec = day['fertilizer'].get('recommendation', 'کوئی نہیں')
@@ -134,7 +138,6 @@ class GeminiAdvisor:
             
             schedule_text = "\n".join(schedule_lines)
             
-            # ✅ FIX: Safe dictionary access with defaults
             best_irr_day = 'ضرورت نہیں'
             if irrigation_summary.get('best_day'):
                 best_irr_day = irrigation_summary['best_day'].get('date_formatted', 'ضرورت نہیں')
@@ -181,7 +184,11 @@ class GeminiAdvisor:
 
 یاد رکھیں: مختصر، سادہ، اور عملی رہیں۔ پیچیدہ الفاظ استعمال نہ کریں۔
 """
-            response = self.model.generate_content(prompt)
+            # ✅ NEW SDK GENERATION CALL
+            response = self.client.models.generate_content(
+                model='gemini-2.5-flash', 
+                contents=prompt
+            )
             return response.text if response and response.text else None
             
         except Exception as e:
@@ -197,6 +204,5 @@ if __name__ == "__main__":
     if advisor.initialized:
         print("✅ Gemini advisor ready!")
         print("✅ Generates concise Urdu explanations (200-250 words)")
-        print("✅ NoneType error fixed in weekly planner")
     else:
         print("❌ Failed to initialize. Check GEMINI_API_KEY in .env")
