@@ -186,7 +186,7 @@ st.markdown("""
        ═══════════════════════════════════════════════════════════════════════ */
     
     .main-header {
-        background: linear-gradient(135deg, #f0fdf4, #dcfce7, #f0fdf4);
+        
         border: 1px solid rgba(34, 197, 94, 0.2);
         border-radius: 20px;
         padding: 30px 40px;
@@ -207,31 +207,29 @@ st.markdown("""
     }
     
     .main-header h1 {
-        color: #166534 !important;
         font-size: 28px;
-        font-weight: 700; 
+        font-weight: 700;
+        color: #000000;
         margin: 0;
-        letter-spacing: -0.5px;   
+        letter-spacing: -0.5px;
     }
     
     .main-header .subtitle {
-        color: #166534 !important;
+        color: #4b5563;
         font-size: 14px;
         margin-top: 8px;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-        
     }
     
     .main-header .badge {
         display: inline-block;
-        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); 
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        color: #ffffff;
         padding: 6px 16px;
         border-radius: 20px;
         font-size: 11px;
         font-weight: 600;
         margin-top: 12px;
         box-shadow: 0 2px 10px rgba(34, 197, 94, 0.3);
-        color: #166534;
     }
     
     /* ═══════════════════════════════════════════════════════════════════════
@@ -790,7 +788,7 @@ with st.sidebar:
 
 st.markdown("""
 <div class="main-header">
-    <h1 >🌾 Agriculture Field Monitoring & Advisory System </h1>
+    <h1>🌾 Agriculture Field Monitoring & Advisory System </h1>
     <p class="subtitle">AI-Powered Crop Classification, Health Assessment & Smart Planning for Pakistani Farmers</p>
     <span class="badge">✨ Powered by Deep Learning & Satellite Imagery</span>
 </div>
