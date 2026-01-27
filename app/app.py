@@ -186,11 +186,11 @@ st.markdown("""
        ═══════════════════════════════════════════════════════════════════════ */
     
     .main-header {
-        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #f0fdf4 100%);
+        background: linear-gradient(135deg, #f0fdf4, #dcfce7, #f0fdf4);
         border: 1px solid rgba(34, 197, 94, 0.2);
         border-radius: 20px;
         padding: 30px 40px;
-        margin-bottom: 30px;
+        margin-bottom: 40px;
         text-align: center;
         position: relative;
         overflow: hidden;
@@ -207,29 +207,31 @@ st.markdown("""
     }
     
     .main-header h1 {
+        color: #166534 !important;
         font-size: 28px;
-        font-weight: 700;
-        color: #14532d;
+        font-weight: 700; 
         margin: 0;
-        letter-spacing: -0.5px;
+        letter-spacing: -0.5px;   
     }
     
     .main-header .subtitle {
-        color: #4b5563;
+        color: #166534 !important;
         font-size: 14px;
         margin-top: 8px;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        
     }
     
     .main-header .badge {
         display: inline-block;
-        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-        color: #ffffff;
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); 
         padding: 6px 16px;
         border-radius: 20px;
         font-size: 11px;
         font-weight: 600;
         margin-top: 12px;
         box-shadow: 0 2px 10px rgba(34, 197, 94, 0.3);
+        color: #166534;
     }
     
     /* ═══════════════════════════════════════════════════════════════════════
@@ -788,11 +790,11 @@ with st.sidebar:
 
 st.markdown("""
 <div class="main-header">
-    <h1>🌾 Agriculture Field Monitoring & Advisory System</h1>
+    <h1 >🌾 Agriculture Field Monitoring & Advisory System </h1>
     <p class="subtitle">AI-Powered Crop Classification, Health Assessment & Smart Planning for Pakistani Farmers</p>
     <span class="badge">✨ Powered by Deep Learning & Satellite Imagery</span>
 </div>
-""", unsafe_allow_html=True)
+""", unsafe_allow_html=True) 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # MAIN LAYOUT

@@ -127,7 +127,7 @@ def get_crop_icon(crop: str) -> str:
 
 def get_crop_color(crop: str) -> str:
     """Get color for crop type."""
-    return UIConfig.COLORS.get(crop.lower(), '#3498db')
+    return UIConfig.COLORS.get(crop.lower() if crop else '', '#3498db')
 
 
 # ─────────────────────────────────────────────────────────────────────────────

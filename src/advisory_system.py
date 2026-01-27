@@ -182,14 +182,14 @@ class AdvisorySystem:
                                 priority: str) -> Dict:
         """Format a single recommendation with metadata."""
         # Assign icon based on content
-        if '🚨' in recommendation or 'immediate' in recommendation.lower():
+        if recommendation and ('🚨' in recommendation or 'immediate' in recommendation.lower()):
             icon = '🚨'
             rec_priority = 'high'
-        elif 'monitor' in recommendation.lower() or 'check' in recommendation.lower():
+        elif recommendation and ('monitor' in recommendation.lower() or 'check' in recommendation.lower()):
             icon = '👁️'
             rec_priority = 'medium'
-        elif 'apply' in recommendation.lower() or 'use' in recommendation.lower():
-            icon = '💧' if 'water' in recommendation.lower() or 'irrigation' in recommendation.lower() else '🌿'
+        elif recommendation and ('apply' in recommendation.lower() or 'use' in recommendation.lower()):
+            icon = '💧' if recommendation and ('water' in recommendation.lower() or 'irrigation' in recommendation.lower()) else '🌿'
             rec_priority = 'medium'
         else:
             icon = '📋'
@@ -287,7 +287,7 @@ class AdvisorySystem:
             'critical': 'is in critical condition',
         }
         
-        base_summary = f"Your {crop.lower()} crop at {growth_stage.lower()} stage {status_text.get(status, 'needs attention')}."
+        base_summary = f"Your {(crop.lower() if crop else 'unknown')} crop at {(growth_stage.lower() if growth_stage else 'unknown')} stage {status_text.get(status, 'needs attention')}."
         
         if status == 'healthy':
             return f"{base_summary} Current NDVI ({ndvi:.2f}) indicates good vegetation health. Continue regular monitoring."
