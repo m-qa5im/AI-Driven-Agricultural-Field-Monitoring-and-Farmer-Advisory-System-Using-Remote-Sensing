@@ -1382,31 +1382,65 @@ with right_col:
             with st.spinner("📅 Generating weekly plan..."):
                 try:
                     from weather_service import WeatherService
-                    from weekly_planner import WeeklyPlanner
+                    from weekly_planner import WeeklyPlanner  # Make sure this imports the FIXED version
                     
                     progress_bar = st.progress(0)
                     
                     weather = WeatherService.get_forecast(lat, lon, 7)
+                    progress_bar.progress(30)
+                    
+                    # ═══════════════════════════════════════════════════════════════
+                    # ✅ NEW: Get vegetation indices from health assessment
+                    # ═══════════════════════════════════════════════════════════════
+                    ndvi = 0.45  # Default if no health assessment
+                    evi = 0.42
+                    ndwi = 0.0
+                    gndvi = 0.43
+                    savi = 0.44
+                    
+                    if 'health_result' in st.session_state and st.session_state['health_result']:
+                        # Extract indices from health assessment
+                        indices = st.session_state['health_result']['indices']
+                        ndvi = indices['ndvi']['mean']
+                        evi = indices['evi']['mean']
+                        ndwi = indices['ndwi']['mean']
+                        gndvi = indices['gndvi']['mean']
+                        savi = indices['savi']['mean']
+                    
                     progress_bar.progress(50)
                     
-                    health_status = 'healthy'
-                    if 'health_result' in st.session_state and st.session_state['health_result']:
-                        health_status = st.session_state['health_result']['health_status']['status']
-                    
+                    # ═══════════════════════════════════════════════════════════════
+                    # ✅ FIXED: Pass vegetation indices instead of health_status
+                    # ═══════════════════════════════════════════════════════════════
                     planner = WeeklyPlanner(planner_crop, lat, lon)
                     plan = planner.generate_weekly_plan(
                         last_irrigation=last_irrigation.strftime('%Y-%m-%d'),
                         last_fertilizer=last_fertilizer.strftime('%Y-%m-%d'),
                         weather_forecast=weather['forecast'],
-                        health_status=health_status
+                        ndvi=ndvi,      # ✅ REQUIRED
+                        evi=evi,        # ✅ Recommended
+                        ndwi=ndwi,      # ✅ Recommended (water stress)
+                        gndvi=gndvi,    # ✅ Recommended (nutrients)
+                        savi=savi       # Optional
                     )
                     progress_bar.progress(100)
                     progress_bar.empty()
                     
-                    # Header
+                    # ═══════════════════════════════════════════════════════════════
+                    # ✅ UPDATED: Use new plan structure with health_assessment
+                    # ═══════════════════════════════════════════════════════════════
+                    
+                    # Header - Show health status from assessment
+                    health_status = plan['health_assessment']['status']
+                    health_label = plan['health_assessment'].get('label', health_status)
+                    
                     st.markdown(f"""
                     <div class="success-alert">
                         ✓ Plan generated for <strong>{plan['crop']}</strong> • Stage: <strong>{plan['stage']}</strong>
+                        <br>
+                        <span style="margin-top: 8px; display: inline-block;">
+                            Health: {health_label} (NDVI: {plan['health_assessment']['ndvi']:.3f})
+                        </span>
                     </div>
                     """, unsafe_allow_html=True)
                     
@@ -1418,18 +1452,29 @@ with right_col:
                         irr_date = irr['best_day']['date_formatted'] if irr['best_day'] else 'Not needed'
                         irr_day = irr['best_day']['day_name'] if irr['best_day'] else ''
                         
-                        if irr['urgency'] == 'high':
+                        # ✅ UPDATED: Use new urgency levels
+                        health_urgency = irr.get('health_urgency', 'normal')
+                        
+                        if health_urgency == 'immediate':
                             status_class = "urgent"
-                            status_text = f"⚠️ OVERDUE by {irr['days_since_last'] - 25} days"
-                            deadline_text = "IRRIGATE IMMEDIATELY"
-                        elif irr['urgency'] == 'medium':
+                            status_text = f"🔴 IMMEDIATE ACTION REQUIRED"
+                            deadline_text = "IRRIGATE NOW - Crop critically stressed"
+                        elif health_urgency == 'urgent':
+                            status_class = "urgent"
+                            status_text = f"⚠️ URGENT - Crop health declining"
+                            deadline_text = "Irrigate within 48 hours"
+                        elif health_urgency == 'high':
                             status_class = "due-soon"
-                            status_text = f"Due soon • {irr['days_since_last']} days since last"
-                            deadline_text = f"Must do by {irr_date}"
+                            status_text = f"HIGH PRIORITY • {irr['days_since_last']} days since last"
+                            deadline_text = f"Action needed by {irr_date}"
+                        elif irr['days_since_last'] >= 25:  # Overdue by normal schedule
+                            status_class = "due-soon"
+                            status_text = f"Due • {irr['days_since_last']} days since last"
+                            deadline_text = f"Best day: {irr_date}"
                         else:
                             status_class = "on-track"
                             status_text = f"On track • {irr['days_since_last']} days since last"
-                            deadline_text = f"Best day: {irr_date}"
+                            deadline_text = f"Next: {irr_date}"
                         
                         st.markdown(f"""
                         <div class="action-card irrigation">
@@ -1450,7 +1495,18 @@ with right_col:
                         fert_day = fert['best_day']['day_name'] if fert['best_day'] else ''
                         fert_type = fert['recommended_type'][:30] if fert['recommended_type'] else 'None'
                         
-                        if fert['status'] == 'due':
+                        # ✅ UPDATED: Use new urgency levels
+                        fert_urgency = fert.get('health_urgency', 'none')
+                        
+                        if fert_urgency == 'urgent':
+                            fert_status_class = "urgent"
+                            fert_status_text = f"🔴 URGENT - Nutrient deficiency detected"
+                            fert_deadline = f"Apply: {fert_type}"
+                        elif fert_urgency == 'high':
+                            fert_status_class = "due-soon"
+                            fert_status_text = f"HIGH PRIORITY • {fert['days_since_last']} days since last"
+                            fert_deadline = f"Apply: {fert_type}"
+                        elif fert['status'] == 'due':
                             fert_status_class = "due-soon"
                             fert_status_text = f"Due now • {fert['days_since_last']} days since last"
                             fert_deadline = f"Apply: {fert_type}"
@@ -1474,6 +1530,20 @@ with right_col:
                     
                     st.markdown("<br>", unsafe_allow_html=True)
                     
+                    # ═══════════════════════════════════════════════════════════════
+                    # ✅ NEW: Show key recommendations from health assessment
+                    # ═══════════════════════════════════════════════════════════════
+                    if plan.get('key_recommendations'):
+                        st.markdown("##### 🎯 Key Recommendations")
+                        for rec in plan['key_recommendations']:
+                            st.markdown(f"""
+                            <div style="padding: 8px 12px; background: #fef3c7; border-left: 4px solid #f59e0b; 
+                                        border-radius: 6px; margin-bottom: 8px; font-size: 14px;">
+                                {rec}
+                            </div>
+                            """, unsafe_allow_html=True)
+                        st.markdown("<br>", unsafe_allow_html=True)
+                    
                     # 7-Day Schedule
                     st.markdown("##### 📅 7-Day Schedule")
                     
@@ -1485,9 +1555,12 @@ with right_col:
                         is_best_fert = day['date'] == best_fert_date
                         is_best = is_best_irr or is_best_fert
                         
+                        # ✅ UPDATED: Handle new recommendation types
                         row_class = "best-day" if is_best else ""
-                        if day['irrigation']['recommendation'] == 'irrigate' and irr['urgency'] == 'high':
+                        if day['priority'] == 'urgent':
                             row_class = "urgent"
+                        elif day['priority'] == 'high':
+                            row_class = "due-soon"
                         
                         rain = day['weather']['rain']
                         weather_icon = "🌧️" if rain > 5 else "⛅" if rain > 0 else "☀️"
@@ -1498,20 +1571,34 @@ with right_col:
                         if is_best_irr:
                             irr_badge = '<span class="best-day-badge">✓ BEST DAY</span>'
                         elif day['irrigation']['recommendation'] == 'irrigate':
-                            irr_badge = '<span class="deadline-badge">Due</span>'
+                            if day['irrigation'].get('urgency_level') in ['immediate', 'urgent']:
+                                irr_badge = '<span class="deadline-badge">URGENT</span>'
+                            else:
+                                irr_badge = '<span class="deadline-badge">Due</span>'
                         
                         if is_best_fert:
                             fert_badge = '<span class="best-day-badge">✓ BEST DAY</span>'
+                        elif day['fertilizer']['recommendation'] == 'apply':
+                            if day['fertilizer'].get('urgency_level') == 'urgent':
+                                fert_badge = '<span class="deadline-badge">URGENT</span>'
                         
-                        if day['irrigation']['recommendation'] == 'irrigate':
+                        # ✅ UPDATED: Handle 'not_possible' recommendation
+                        if day['irrigation']['recommendation'] == 'not_possible':
+                            irr_text = '<span style="color: #dc2626; font-weight: 600;">⛔ Too soon</span>'
+                        elif day['irrigation']['recommendation'] == 'irrigate':
                             irr_text = f'<span style="color: #2563eb; font-weight: 600;">💧 Irrigate</span> {irr_badge}'
+                        elif day['irrigation']['recommendation'] == 'monitor':
+                            irr_text = '<span style="color: #f59e0b; font-weight: 600;">👁️ Monitor</span>'
                         elif day['irrigation']['recommendation'] == 'skip':
                             irr_text = '<span style="color: #6b7280;">⏭️ Skip (rain)</span>'
                         else:
                             irr_text = '<span style="color: #9ca3af;">◽ No action</span>'
                         
-                        if day['fertilizer']['recommendation'] in ['apply', 'urgent']:
-                            fert_text = f'<span style="color: #9333ea; font-weight: 600;">🧪 {day["fertilizer"]["fertilizer_type"][:15]}</span> {fert_badge}'
+                        # ✅ UPDATED: Handle fertilizer 'not_possible'
+                        if day['fertilizer']['recommendation'] == 'not_possible':
+                            fert_text = '<span style="color: #dc2626; font-weight: 600;">⛔ Too soon</span>'
+                        elif day['fertilizer']['recommendation'] in ['apply', 'urgent']:
+                            fert_text = f'<span style="color: #9333ea; font-weight: 600;">🧪 {day["fertilizer"]["fertilizer_type"][:15] if day["fertilizer"]["fertilizer_type"] else "Apply"}</span> {fert_badge}'
                         else:
                             fert_text = '<span style="color: #9ca3af;">◽ No action</span>'
                         
@@ -1537,7 +1624,8 @@ with right_col:
                     <div style="margin-top: 20px; padding: 15px; background: #f9fafb; border-radius: 8px; font-size: 12px; color: #6b7280;">
                         <strong>Legend:</strong> 
                         <span style="background: #22c55e; color: white; padding: 2px 8px; border-radius: 10px; margin-left: 10px;">✓ BEST DAY</span> = Optimal conditions
-                        <span style="background: #f59e0b; color: white; padding: 2px 8px; border-radius: 10px; margin-left: 10px;">Due</span> = Action required
+                        <span style="background: #f59e0b; color: white; padding: 2px 8px; border-radius: 10px; margin-left: 10px;">URGENT</span> = Health-based priority
+                        <span style="background: #dc2626; color: white; padding: 2px 8px; border-radius: 10px; margin-left: 10px;">⛔ Too soon</span> = Recently applied
                         <span style="margin-left: 10px;">☀️ = Clear</span>
                         <span style="margin-left: 10px;">🌧️ = Rain expected</span>
                     </div>
@@ -1546,8 +1634,6 @@ with right_col:
                     st.markdown("<br>", unsafe_allow_html=True)
                     
                     # ═══ GEMINI AI EXPLANATION IN URDU ═══
-                    # 1. ADD THIS AT THE TOP OF YOUR STREAMLIT APP (OR INSIDE THE MAIN FUNCTION)
-                    # This imports the font so the browser can actually display it.
                     st.markdown("""
                         <style>
                         @import url('https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400..700&display=swap');
@@ -1559,7 +1645,6 @@ with right_col:
                         </style>
                         """, unsafe_allow_html=True)
 
-                    # 2. UPDATED HEADER SECTION
                     st.markdown("""
                         <div class="section-header nastaleeq-text" style="direction: rtl; text-align: right;">
                             <div class="icon">🤖</div>
@@ -1581,7 +1666,6 @@ with right_col:
                                 if explanation:
                                     formatted_explanation = explanation.replace("\n", "<br>")
 
-                                    # ✅ CORRECTED BOX WITH FONT IMPORTED
                                     st.markdown(f"""
                                     <div style="background: #f8fafc; 
                                                 border: 2px solid #93c5fd; 
@@ -1598,7 +1682,6 @@ with right_col:
                                     </div>
                                     """, unsafe_allow_html=True)
                                     
-                                    # ✅ CORRECTED NOTE SECTION
                                     st.markdown("""
                                     <div style="margin-top: 12px; 
                                                 padding: 12px; 
