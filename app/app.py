@@ -31,19 +31,16 @@ st.set_page_config(
 )
 
 st.markdown("""
-<style>
-    /* 1. Sab se pehle header ki visibility enable karein taake button nazar aaye */
+<style> 
     header {
         visibility: visible !important;
-        background: transparent !important; /* Header ka background transparent rakhein */
+        background: transparent !important;
     }
 
-    /* 2. Streamlit ke default header elements ko hide karein (sirf button chorr kar) */
     header [data-testid="stHeaderActionElements"] {
         display: none !important;
     }
 
-    /* 3. Toggle button (collapsedControl) ko force-show karein */
     [data-testid="collapsedControl"] {
         display: flex !important;
         visibility: visible !important;
@@ -57,13 +54,11 @@ st.markdown("""
         box-shadow: 2px 2px 10px rgba(0,0,0,0.3) !important;
     }
 
-    /* 4. Icon ka rang safaid (white) karein taake dark theme par nazar aaye */
     [data-testid="collapsedControl"] svg {
         fill: white !important;
         color: white !important;
     }
 
-    /* 5. Main content ko thora neeche karein taake button ke saath takraye nahi */
     .main .block-container {
         padding-top: 4rem !important;
     }
