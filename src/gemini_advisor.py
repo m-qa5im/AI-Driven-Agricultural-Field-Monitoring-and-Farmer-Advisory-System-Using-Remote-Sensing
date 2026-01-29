@@ -1,7 +1,5 @@
 # ╔═══════════════════════════════════════════════════════════════════════════╗
-# ║  FILE: gemini_advisor.py                                                  ║
-# ║  Location: src/gemini_advisor.py                                          ║
-# ║  STATUS: FIXED for google-genai (New SDK)                                 ║
+# ║                         GEMINI ADVISOR                                    ║
 # ╚═══════════════════════════════════════════════════════════════════════════╝
 
 import os
@@ -11,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ─────────────────────────────────────────────────────────────────────────────
-# IMPORTING THE NEW SDK
+# IMPORTING THE SDK
 # ─────────────────────────────────────────────────────────────────────────────
 try:
     from google import genai
@@ -22,11 +20,10 @@ except ImportError:
 
 
 class GeminiAdvisor:
-    """Gemini AI advisor for generating concise Urdu explanations using the New SDK"""
     
     def __init__(self, api_key: Optional[str] = None):
         self.initialized = False
-        self.client = None  # Renamed from 'model' to 'client' for new SDK
+        self.client = None  
         
         if not GENAI_AVAILABLE:
             print("❌ Gemini SDK not available")
@@ -39,7 +36,6 @@ class GeminiAdvisor:
             return
         
         try:
-            # ✅ NEW SDK INITIALIZATION
             self.client = genai.Client(api_key=self.api_key)
             self.initialized = True
             print("✅ Gemini AI initialized (gemini-2.5-flash)")
@@ -59,7 +55,7 @@ class GeminiAdvisor:
             diagnosis = health_result.get('diagnosis', {})
             
             prompt = f"""
-آپ پاکستانی کسانوں کے لیے زرعی مشیر ہیں۔ آپ کو فصل کی صحت کی تشخیص کو سادہ اردو میں سمجھانا ہے۔
+آپ پاکستانی کسان کے لیے زرعی مشیر/ماہر زراعت ہیں۔ آپ کو فصل کی صحت کی تشخیص کو سادہ اردو میں سمجھانا ہے بطور کسان راہنما۔ 
 
 اہم: جواب مختصر اور واضح ہو (200-250 الفاظ)۔ صرف ضروری معلومات دیں۔
 
@@ -95,7 +91,7 @@ class GeminiAdvisor:
 
 یاد رکھیں: مختصر، سادہ، اور عملی رہیں۔ پیچیدہ الفاظ استعمال نہ کریں۔
 """
-            # ✅ NEW SDK GENERATION CALL
+            
             response = self.client.models.generate_content(
                 model='gemini-2.5-flash', 
                 contents=prompt
@@ -147,7 +143,7 @@ class GeminiAdvisor:
                 best_fert_day = fertilizer_summary['best_day'].get('date_formatted', 'ضرورت نہیں')
             
             prompt = f"""
-آپ پاکستانی کسانوں کے لیے زرعی مشیر ہیں۔ آپ کو ہفتہ وار منصوبہ سادہ اردو میں سمجھانا ہے۔
+آپ پاکستانی کسانوں کے لیے زرعی مشیر/ماہر زراعت ہیں۔ آپ کو ہفتہ وار منصوبہ سادہ اردو میں سمجھانا ہے بطور کسان راہنما۔
 
 اہم: جواب مختصر اور واضح ہو (200-250 الفاظ)۔ صرف ضروری معلومات دیں۔
 
@@ -184,7 +180,7 @@ class GeminiAdvisor:
 
 یاد رکھیں: مختصر، سادہ، اور عملی رہیں۔ پیچیدہ الفاظ استعمال نہ کریں۔
 """
-            # ✅ NEW SDK GENERATION CALL
+            
             response = self.client.models.generate_content(
                 model='gemini-2.5-flash', 
                 contents=prompt

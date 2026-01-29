@@ -1,5 +1,5 @@
 # ╔═══════════════════════════════════════════════════════════════════════════╗
-# ║  WEATHER SERVICE - Open-Meteo API Integration                              ║
+# ║  WEATHER SERVICE - Open-Meteo API Integration                             ║
 # ╚═══════════════════════════════════════════════════════════════════════════╝
 
 import requests
@@ -17,17 +17,7 @@ class WeatherService:
     
     @classmethod
     def get_forecast(cls, lat: float, lon: float, days: int = 7) -> Dict:
-        """
-        Get weather forecast for location.
         
-        Args:
-            lat: Latitude
-            lon: Longitude
-            days: Number of days to forecast (max 16)
-            
-        Returns:
-            Dictionary with forecast data
-        """
         try:
             params = {
                 'latitude': lat,

@@ -1,6 +1,5 @@
 # ╔═══════════════════════════════════════════════════════════════════════════╗
-# ║  WEEKLY PLANNER - Health-First Irrigation & Fertilization Scheduling      ║
-# ║  Updated: Proper integration with vegetation indices                       ║
+# ║                           WEEKLY PLANNER                                  ║
 # ╚═══════════════════════════════════════════════════════════════════════════╝
 
 from datetime import datetime, timedelta
@@ -150,11 +149,7 @@ class WeeklyPlanner:
         # Analyze specific issues
         issues = []
         
-        # ═══════════════════════════════════════════════════════════════
-        # CRITICAL: Water stress detection (NDWI analysis)
-        # NDWI is a DIRECT indicator of water content and should
-        # OVERRIDE NDVI-based priority when indicating water stress
-        # ═══════════════════════════════════════════════════════════════
+        
         if ndwi is not None:
             if ndwi < -0.2:
                 # SEVERE water stress - IMMEDIATE irrigation needed
@@ -180,11 +175,7 @@ class WeeklyPlanner:
                 if irrigation_priority == 'standard':
                     irrigation_priority = 'high'
         
-        # ═══════════════════════════════════════════════════════════════
-        # Nutrient deficiency detection (GNDVI analysis)
-        # GNDVI measures chlorophyll content - low GNDVI indicates
-        # nutrient deficiency even if NDVI looks okay
-        # ═══════════════════════════════════════════════════════════════
+       
         if gndvi is not None:
             if gndvi < 0.25:
                 # SEVERE nutrient deficiency
@@ -243,11 +234,7 @@ class WeeklyPlanner:
         status = health_assessment['status']
         issues = health_assessment['specific_issues']
         
-        # ═══════════════════════════════════════════════════════════════
-        # CRITICAL CONSTRAINT: Minimum days between irrigations
-        # ═══════════════════════════════════════════════════════════════
-        # Even in critical conditions, you cannot irrigate the same day
-        # Minimum 2 days for emergency, 3 days for normal cases
+        
         ABSOLUTE_MIN_DAYS = 2  # Physical constraint
         
         if days_since < ABSOLUTE_MIN_DAYS:
@@ -443,7 +430,7 @@ class WeeklyPlanner:
         issues = health_assessment['specific_issues']
         
         # ═══════════════════════════════════════════════════════════════
-        # FERTILIZER DECISION LOGIC - HEALTH FIRST (if application possible)
+        # FERTILIZER DECISION LOGIC - HEALTH FIRST 
         # ═══════════════════════════════════════════════════════════════
         
         # Check for nutrient deficiency
@@ -565,26 +552,7 @@ class WeeklyPlanner:
                            ndwi: Optional[float] = None,
                            gndvi: Optional[float] = None,
                            savi: Optional[float] = None) -> Dict:
-        """
-        Generate complete weekly plan - VEGETATION INDICES FIRST.
         
-        THIS IS THE CORRECT FLOW:
-        1. Assess crop health from vegetation indices
-        2. Determine urgency levels
-        3. Calculate irrigation schedule (health-aware)
-        4. Calculate fertilizer schedule (health-aware)
-        5. Generate combined daily plan
-        
-        Args:
-            last_irrigation: Last irrigation date 'YYYY-MM-DD'
-            last_fertilizer: Last fertilization date 'YYYY-MM-DD'
-            weather_forecast: 7-day weather forecast
-            ndvi: Current NDVI value (REQUIRED)
-            evi: Enhanced Vegetation Index (optional)
-            ndwi: Normalized Difference Water Index (optional)
-            gndvi: Green NDVI (optional)
-            savi: Soil Adjusted Vegetation Index (optional)
-        """
         
         # ═══════════════════════════════════════════════════════════════
         # STEP 1: ASSESS CROP HEALTH (PRIMARY INPUT)
@@ -739,13 +707,7 @@ def create_plan_from_satellite_data(crop: str,
                                    last_irrigation: str,
                                    last_fertilizer: str,
                                    weather_forecast: List[Dict]) -> Dict:
-    """
-    Convenience function: Generate plan directly from satellite band data.
     
-    Args:
-        band_data: numpy array (4, H, W) with [B2, B3, B4, B8]
-        (other args same as generate_weekly_plan)
-    """
     # First, do full health assessment
     full_health = assess_crop_health(band_data, crop, already_scaled=True)
     

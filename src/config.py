@@ -1,6 +1,5 @@
 # ╔═══════════════════════════════════════════════════════════════════════════╗
-# ║  PAKISTAN CROP CLASSIFICATION SYSTEM - CONFIGURATION (UPDATED)            ║
-# ║  Fixed: Cloud filtering and buffer size for better data retrieval         ║
+# ║                         CONFIGURATION FILE                                ║
 # ╚═══════════════════════════════════════════════════════════════════════════╝
 
 import os
@@ -12,19 +11,13 @@ from typing import Dict, List, Tuple
 # ─────────────────────────────────────────────────────────────────────────────
 
 class PathConfig:
-    """File paths configuration."""
-    
-    # Model paths (update these for your deployment)
+        
     V4_MODEL_PATH = "models/best_model_v4.pth"
     V6_MODEL_PATH = "models/best_model_v6_variable.pth"
     
-    # Service account key (keep this secure!)
     GEE_SERVICE_ACCOUNT_KEY = "credentials/gee_service_account.json"
     
-    # Output directories
-    OUTPUT_DIR = "outputs"
-    TEMP_DIR = "temp"
-    LOGS_DIR = "logs"
+
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -32,25 +25,23 @@ class PathConfig:
 # ─────────────────────────────────────────────────────────────────────────────
 
 class ModelConfig:
-    """Model architecture and inference settings."""
     
-    # Input specifications
     IMAGE_SIZE = (64, 64)
     NUM_BANDS = 4  # B2, B3, B4, B8
     NUM_MONTHS = 6
     NUM_CHANNELS = NUM_BANDS * NUM_MONTHS  # 24
     
-    # Classes
+    
     CLASS_NAMES = ['Other', 'Rice', 'Wheat']
     NUM_CLASSES = 3
     CLASS_TO_IDX = {name: idx for idx, name in enumerate(CLASS_NAMES)}
     IDX_TO_CLASS = {idx: name for idx, name in enumerate(CLASS_NAMES)}
     
-    # Model selection thresholds
+   
     MIN_MONTHS_FOR_V4 = 5  # Use V4 if >= 5 months available
     MIN_MONTHS_FOR_CLASSIFICATION = 3  # Minimum months needed for reliable classification
     
-    # Confidence thresholds
+    
     HIGH_CONFIDENCE_THRESHOLD = 0.85
     MEDIUM_CONFIDENCE_THRESHOLD = 0.70
     LOW_CONFIDENCE_THRESHOLD = 0.50
@@ -63,7 +54,7 @@ class ModelConfig:
 class DateConfig:
     """Date range and temporal settings."""
     
-    # Minimum date for data availability (Sentinel-2 reliable data)
+    
     MIN_DATE = date(2022, 4, 1)  # April 2022
     
     # Maximum date (today)
@@ -79,12 +70,7 @@ class DateConfig:
     
     @classmethod
     def is_valid_date(cls, check_date: date) -> Tuple[bool, str]:
-        """
-        Check if date is within valid range.
-        
-        Returns:
-            Tuple of (is_valid, message)
-        """
+       
         if check_date < cls.MIN_DATE:
             return False, f"Date must be after {cls.MIN_DATE.strftime('%B %Y')}"
         
@@ -95,7 +81,6 @@ class DateConfig:
     
     @classmethod
     def get_available_years(cls) -> List[int]:
-        """Get list of available years for analysis."""
         return list(range(cls.MIN_DATE.year, date.today().year + 1))
 
 
@@ -104,19 +89,16 @@ class DateConfig:
 # ─────────────────────────────────────────────────────────────────────────────
 
 class TemporalConfig:
-    """Crop seasons and temporal settings for Pakistan."""
     
-    # Month names for each season
     RICE_MONTHS = ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct']
     WHEAT_MONTHS = ['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr']
     
-    # Month to index mapping
     MONTH_TO_IDX = {
         'Rice': {month: idx for idx, month in enumerate(RICE_MONTHS)},
         'Wheat': {month: idx for idx, month in enumerate(WHEAT_MONTHS)},
     }
     
-    # Growing seasons (month numbers)
+    
     RICE_SEASON = {
         'start': 5,   # May
         'end': 10,    # October
@@ -131,7 +113,7 @@ class TemporalConfig:
         'months': [11, 12, 1, 2, 3, 4],  # November to April
     }
     
-    # Growth stages by month
+    
     RICE_GROWTH_STAGES = {
         5: 'Land Preparation / Nursery',
         6: 'Transplanting',
@@ -152,7 +134,7 @@ class TemporalConfig:
     
     @classmethod
     def get_current_season(cls) -> str:
-        """Determine current growing season based on date."""
+
         month = datetime.now().month
         if month in cls.RICE_SEASON['months']:
             return 'Rice'
@@ -161,7 +143,7 @@ class TemporalConfig:
     
     @classmethod
     def get_season_for_month(cls, month: int) -> str:
-        """Determine season for a specific month."""
+        
         if month in cls.RICE_SEASON['months']:
             return 'Rice'
         else:
@@ -169,7 +151,7 @@ class TemporalConfig:
     
     @classmethod
     def get_growth_stage(cls, crop: str, month: int) -> str:
-        """Get growth stage for a crop in a given month."""
+        
         if crop == 'Rice':
             return cls.RICE_GROWTH_STAGES.get(month, 'Off-season')
         elif crop == 'Wheat':
@@ -178,15 +160,7 @@ class TemporalConfig:
     
     @classmethod
     def get_valid_crops_for_season(cls, month: int) -> List[str]:
-        """
-        Get valid crop classes for a given month/season.
         
-        Args:
-            month: Month number (1-12)
-            
-        Returns:
-            List of valid crop classes for classification
-        """
         if month in cls.RICE_SEASON['months']:
             # Rice season: Can classify Rice or Other (NOT Wheat)
             return ['Rice', 'Other']
@@ -196,16 +170,7 @@ class TemporalConfig:
     
     @classmethod
     def is_crop_valid_for_season(cls, crop: str, month: int) -> Tuple[bool, str]:
-        """
-        Check if a crop classification is valid for the given season.
         
-        Args:
-            crop: Predicted crop class
-            month: Month of analysis
-            
-        Returns:
-            Tuple of (is_valid, reason_message)
-        """
         valid_crops = cls.get_valid_crops_for_season(month)
         season = cls.get_season_for_month(month)
         
@@ -216,15 +181,7 @@ class TemporalConfig:
     
     @classmethod
     def get_season_info(cls, month: int = None) -> Dict:
-        """
-        Get detailed season information.
         
-        Args:
-            month: Month number (default: current month)
-            
-        Returns:
-            Dictionary with season details
-        """
         if month is None:
             month = datetime.now().month
         
@@ -253,7 +210,7 @@ class TemporalConfig:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# GEE CONFIGURATION (UPDATED - KEY FIXES HERE)
+# GEE CONFIGURATION 
 # ─────────────────────────────────────────────────────────────────────────────
 
 class GEEConfig:
@@ -271,18 +228,14 @@ class GEEConfig:
         'B8': 'NIR',
     }
     
-    # ═══════════════════════════════════════════════════════════════════════
-    # CRITICAL FIX: More lenient cloud filtering
-    # ═══════════════════════════════════════════════════════════════════════
-    CLOUD_FILTER_PERCENT = 90  # Increased from 80 to 90
-    CLOUD_FILTER_PERCENT_FALLBACK = 95  # Even more lenient for fallback
+    
+    CLOUD_FILTER_PERCENT = 90  
+    CLOUD_FILTER_PERCENT_FALLBACK = 95  
     
     # Scale (resolution in meters)
     SCALE = 10  # Sentinel-2 resolution
     
-    # ═══════════════════════════════════════════════════════════════════════
-    # CRITICAL FIX: Larger buffer for better data capture
-    # ═══════════════════════════════════════════════════════════════════════
+    
     BUFFER_SIZE = 500  # Increased from 320 to 500 meters (~100 pixels at 10m)
     BUFFER_SIZE_FALLBACK = 800  # Fallback larger buffer
     
@@ -294,14 +247,12 @@ class GEEConfig:
         'max_lat': 34.0,
     }
     
-    # ═══════════════════════════════════════════════════════════════════════
-    # NEW: Date range expansion for fallback
-    # ═══════════════════════════════════════════════════════════════════════
-    DATE_RANGE_EXPANSION_DAYS = 7  # Try ±7 days if no data in exact month
+    
+    DATE_RANGE_EXPANSION_DAYS = 7  
     
     @classmethod
     def is_in_punjab(cls, lat: float, lon: float) -> bool:
-        """Check if coordinates are within Punjab region."""
+        
         return (cls.PUNJAB_BOUNDS['min_lat'] <= lat <= cls.PUNJAB_BOUNDS['max_lat'] and
                 cls.PUNJAB_BOUNDS['min_lon'] <= lon <= cls.PUNJAB_BOUNDS['max_lon'])
 
@@ -311,7 +262,7 @@ class GEEConfig:
 # ─────────────────────────────────────────────────────────────────────────────
 
 class HealthConfig:
-    """NDVI thresholds for crop health assessment."""
+    
     
     # Rice NDVI thresholds by growth stage
     RICE_NDVI = {
@@ -419,13 +370,12 @@ class HealthConfig:
 # ─────────────────────────────────────────────────────────────────────────────
 
 class AdvisoryConfig:
-    """Advisory system settings and recommendations database."""
+    
     
     # Stress types
     STRESS_TYPES = [
         'water_stress',
         'nutrient_deficiency',
-        'pest_disease',
         'general',
     ]
     
@@ -462,9 +412,9 @@ class AdvisoryConfig:
 class UIConfig:
     """User interface settings."""
     
-    APP_TITLE = "🌾 AI-Driven Agricultural Field Monitoring"
-    APP_SUBTITLE = "AI-Powered Agricultural Monitoring for Pakistan"
-    APP_VERSION = "1.0.1"  # Updated version with fixes
+    #APP_TITLE = "🌾 AI-Driven Agricultural Field Monitoring"
+    #APP_SUBTITLE = "AI-Powered Agricultural Monitoring for Pakistan"
+    #APP_VERSION = "1.0.0"  
     
     DEFAULT_CENTER = [31.5, 73.0]  # Punjab center
     DEFAULT_ZOOM = 8

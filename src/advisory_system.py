@@ -1,6 +1,5 @@
 # ╔═══════════════════════════════════════════════════════════════════════════╗
-# ║  PAKISTAN CROP CLASSIFICATION SYSTEM - ADVISORY SYSTEM                     ║
-# ║  Crop-specific recommendations based on health assessment                  ║
+# ║                             ADVISORY SYSTEM                               ║
 # ╚═══════════════════════════════════════════════════════════════════════════╝
 
 from typing import Dict, List, Optional
@@ -375,14 +374,6 @@ class WeatherAdvisory:
         """
         if not self.enabled:
             return []
-        
-        # TODO: Implement weather API integration
-        # - Fetch current weather and forecast
-        # - Generate recommendations based on:
-        #   - Rain forecast (irrigation scheduling)
-        #   - Temperature extremes (heat/cold stress)
-        #   - Humidity (disease risk)
-        #   - Wind (spray timing)
         
         return []
 

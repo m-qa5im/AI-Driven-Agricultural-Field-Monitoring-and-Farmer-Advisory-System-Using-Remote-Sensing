@@ -136,20 +136,7 @@ class HealthAssessor:
         return self.THRESHOLDS.get(self.crop, {}).get(self.stage, default)
     
     def assess_from_bands(self, band_data: np.ndarray, already_scaled: bool = True) -> Dict:
-        """
-        Perform health assessment from 4-band satellite data.
         
-        Args:
-            band_data: numpy array of shape (4, H, W) with bands [B2, B3, B4, B8]
-            already_scaled: If True, data is already in 0-1 range. If False, will divide by 10000.
-            
-        Returns:
-            Comprehensive health assessment dictionary
-        """
-        # ------------------------------------------------------------------
-        # IMPORTANT: GEE fetcher already scales data by dividing by 10000
-        # So by default we expect already_scaled=True
-        # ------------------------------------------------------------------
         if not already_scaled:
             band_data = band_data.astype(np.float32) / 10000.0
 

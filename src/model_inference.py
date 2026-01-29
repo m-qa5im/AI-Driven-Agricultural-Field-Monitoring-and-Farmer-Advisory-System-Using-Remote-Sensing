@@ -1,6 +1,5 @@
 # ╔═══════════════════════════════════════════════════════════════════════════╗
-# ║  PAKISTAN CROP CLASSIFICATION SYSTEM - MODEL INFERENCE                     ║
-# ║  Logic Controller (Brain) - Decides V4 vs V6 based on data availability   ║
+# ║                                MODEL INFERENCE                            ║
 # ╚═══════════════════════════════════════════════════════════════════════════╝
 
 import torch
@@ -149,13 +148,7 @@ class SeasonValidator:
     def validate_prediction(predicted_class: str, 
                            probabilities: Dict[str, float],
                            month: int) -> Dict:
-        """
-        Validate and potentially adjust prediction based on season.
         
-        Rule:
-        - Rice season (May-Oct): Can classify Rice or Other (NOT Wheat)
-        - Wheat season (Nov-Apr): Can classify Wheat or Other (NOT Rice)
-        """
         valid_crops = TemporalConfig.get_valid_crops_for_season(month)
         season_info = TemporalConfig.get_season_info(month)
         
@@ -204,17 +197,6 @@ class SeasonValidator:
 # ─────────────────────────────────────────────────────────────────────────────
 
 class CropClassifier:
-    """
-    Logic Controller (Brain) - Decides which model to use.
-    
-    Decision Rule:
-    ══════════════════════════════════════════════════════════════
-    │ Months Available │ Model │ Input                          │
-    ══════════════════════════════════════════════════════════════
-    │     >= 5         │  V4   │ 24-channel stack only          │
-    │     < 5          │  V6   │ 24-channel stack + mask        │
-    ══════════════════════════════════════════════════════════════
-    """
     
     # Threshold for switching between models
     MIN_MONTHS_FOR_V4 = 5
@@ -224,15 +206,7 @@ class CropClassifier:
                  v6_model_path: str = None,
                  device: str = None,
                  enable_season_validation: bool = True):
-        """
-        Initialize classifier.
         
-        Args:
-            v4_model_path: Path to V4 model weights
-            v6_model_path: Path to V6 model weights
-            device: 'cuda' or 'cpu' (auto-detect if None)
-            enable_season_validation: Whether to validate predictions against season
-        """
         if device is None:
             self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         else:
@@ -334,32 +308,7 @@ class CropClassifier:
                 analysis_date: datetime = None,
                 use_tta: bool = True,
                 **kwargs) -> Dict:
-        """
-        Predict crop type using Logic Controller decision.
         
-        ═══════════════════════════════════════════════════════════════════
-        LOGIC CONTROLLER DECISION:
-        ═══════════════════════════════════════════════════════════════════
-        │ count = sum(availability_mask)                                  │
-        │                                                                 │
-        │ if count >= 5:                                                  │
-        │     model = V4                                                  │
-        │     input = image_stack only                                    │
-        │                                                                 │
-        │ if count < 5:                                                   │
-        │     model = V6                                                  │
-        │     input = image_stack + availability_mask                     │
-        ═══════════════════════════════════════════════════════════════════
-        
-        Args:
-            image_stack: numpy array of shape (24, H, W) - zero-padded
-            availability_mask: list of 6 integers [0 or 1]
-            analysis_date: Date of analysis (for season validation)
-            use_tta: Whether to use Test-Time Augmentation
-            
-        Returns:
-            Prediction results dictionary
-        """
         # Backward compatibility
         if image_stack is None:
             image_stack = kwargs.get('image')
@@ -527,98 +476,3 @@ def create_classifier(v4_path: str = None,
     )
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# TEST
-# ─────────────────────────────────────────────────────────────────────────────
-
-if __name__ == "__main__":
-    print("=" * 70)
-    print("TESTING LOGIC CONTROLLER (BRAIN)")
-    print("=" * 70)
-    
-    # Test case 1: Full data (6 months)
-    print("\n[TEST 1] Full data - 6 months available")
-    image_stack = np.random.rand(24, 64, 64).astype(np.float32)
-    mask_full = [1, 1, 1, 1, 1, 1]
-    print(f"  Availability mask: {mask_full}")
-    print(f"  Expected: V4 model (>= 5 months)")
-    
-    # Test case 2: Partial data (3 months)
-    print("\n[TEST 2] Partial data - 3 months available")
-    mask_partial = [1, 1, 1, 0, 0, 0]
-    print(f"  Availability mask: {mask_partial}")
-    print(f"  Expected: V6 model (< 5 months)")
-    
-    # Test case 3: Edge case (5 months)
-    print("\n[TEST 3] Edge case - 5 months available")
-    mask_edge = [1, 1, 1, 1, 1, 0]
-    print(f"  Availability mask: {mask_edge}")
-    print(f"  Expected: V4 model (>= 5 months)")
-    
-    # Test case 4: Minimal data (1 month)
-    print("\n[TEST 4] Minimal data - 1 month available")
-    mask_minimal = [1, 0, 0, 0, 0, 0]
-    print(f"  Availability mask: {mask_minimal}")
-    print(f"  Expected: V6 model (< 5 months)")
-    
-    print("\n" + "=" * 70)
-    print("Test with actual models...")
-    print("=" * 70)
-    
-    try:
-        classifier = CropClassifier(enable_season_validation=True)
-        
-        result = classifier.predict(image_stack, mask_full)
-        print(f"\nFull data result:")
-        print(f"  Model used: {result['model_used']}")
-        print(f"  Prediction: {result['predicted_class']}")
-        print(f"  Confidence: {result['confidence']:.1%}")
-        
-        result = classifier.predict(image_stack, mask_partial)
-        print(f"\nPartial data result:")
-        print(f"  Model used: {result['model_used']}")
-        print(f"  Prediction: {result['predicted_class']}")
-        print(f"  Confidence: {result['confidence']:.1%}")
-        
-    except Exception as e:
-        print(f"\nModel test skipped: {str(e)}")
-"""
-
----
-
-## Summary
-
-| Component | Responsibility |
-|-----------|----------------|
-| **Stacker (gee_fetcher.py)** | ALWAYS outputs 24-channel tensor with zero-padding |
-| **Brain (model_inference.py)** | Decides V4 (≥5 months) or V6 (<5 months) |
-
-### Decision Flow
-```
-Input: Coordinates + Date
-         │
-         ▼
-┌─────────────────────────────────────────┐
-│           STACKER                        │
-│  • Fetch available months                │
-│  • Create 24-channel tensor              │
-│  • Zero-pad missing slots                │
-│  • Generate availability mask            │
-│                                          │
-│  Output: [24, 64, 64] + [1,1,1,0,0,0]   │
-└─────────────────────────────────────────┘
-         │
-         ▼
-┌─────────────────────────────────────────┐
-│            BRAIN                         │
-│  count = sum(availability_mask)          │
-│                                          │
-│  if count >= 5:                          │
-│      V4(image_stack)                     │
-│  else:                                   │
-│      V6(image_stack, mask)               │
-└─────────────────────────────────────────┘
-         │
-         ▼
-   Final Prediction
-   """

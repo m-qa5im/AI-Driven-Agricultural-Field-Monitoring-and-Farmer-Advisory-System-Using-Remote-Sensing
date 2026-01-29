@@ -1,6 +1,5 @@
 # ╔═══════════════════════════════════════════════════════════════════════════╗
-# ║  PAKISTAN CROP CLASSIFICATION - GEE FETCHER (PROPER SAMPLING FIX)         ║
-# ║  Uses reduceRegion instead of sampleRectangle for reliable extraction     ║
+# ║                                 GEE FETCHER                               ║
 # ╚═══════════════════════════════════════════════════════════════════════════╝
 
 import ee
@@ -18,12 +17,6 @@ logger = logging.getLogger(__name__)
 
 
 class GEEFetcher:
-    """
-    Fetches Sentinel-2 imagery using proper GEE sampling methods.
-    
-    KEY FIX: Uses getThumbURL() or getRegion() instead of sampleRectangle()
-    for reliable data extraction that matches GEE Code Editor behavior.
-    """
     
     def __init__(self, service_account_key: str = None):
         self.service_account_key = service_account_key
@@ -119,22 +112,14 @@ class GEEFetcher:
     def _image_to_array_proper(self, 
                                 image: ee.Image, 
                                 region: ee.Geometry) -> np.ndarray:
-        """
-        Convert EE image to numpy array using PROPER method.
-        
-        CRITICAL FIX: Uses getThumbURL with visualization which is more reliable
-        than sampleRectangle for getting actual pixel values.
-        """
         try:
             # ═══════════════════════════════════════════════════════════════
-            # METHOD 1: Try getRegion (most reliable, matches Code Editor)
+            # METHOD 1: getRegion 
             # ═══════════════════════════════════════════════════════════════
             try:
                 # Get region as a rectangle
                 rect = region.bounds()
                 
-                # Sample the image at the region
-                # This matches how GEE Code Editor samples data
                 sampled = image.sample(
                     region=rect,
                     scale=10,  # Sentinel-2 resolution
@@ -142,7 +127,6 @@ class GEEFetcher:
                     numPixels=64 * 64  # Target number of pixels
                 )
                 
-                # Get feature collection size
                 sample_size = sampled.size().getInfo()
                 
                 if sample_size > 0:
@@ -192,20 +176,20 @@ class GEEFetcher:
                 logger.warning(f"      Method 1 failed: {str(e)}")
             
             # ═══════════════════════════════════════════════════════════════
-            # METHOD 2: Try sampleRectangle with proper geometry
+            # METHOD 2: sampleRectangle with proper geometry
             # ═══════════════════════════════════════════════════════════════
             try:
-                # Create a proper rectangular geometry
+                
                 bounds = region.bounds().getInfo()['coordinates'][0]
                 
-                # Create rectangle
+                
                 rect_geom = ee.Geometry.Rectangle(
                     coords=[bounds[0], bounds[1], bounds[2], bounds[3]],
                     proj='EPSG:4326',
                     geodesic=False
                 )
                 
-                # Sample with explicit properties
+                
                 result = image.sampleRectangle(
                     region=rect_geom,
                     defaultValue=0,
@@ -229,7 +213,7 @@ class GEEFetcher:
                 logger.warning(f"      Method 2 failed: {str(e)}")
             
             # ═══════════════════════════════════════════════════════════════
-            # METHOD 3: Use getThumbURL (most reliable fallback)
+            # METHOD 3: getThumbURL 
             # ═══════════════════════════════════════════════════════════════
             try:
                 logger.info(f"      Trying Method 3 (getThumbURL)...")
@@ -246,7 +230,6 @@ class GEEFetcher:
                 
                 url = image.getThumbURL(thumb_params)
                 
-                # Download and process the thumbnail
                 import requests
                 response = requests.get(url)
                 
@@ -255,16 +238,13 @@ class GEEFetcher:
                     img = PILImage.open(BytesIO(response.content))
                     img_array = np.array(img)
                     
-                    # If RGB, we need to extract bands differently
+                    
                     if len(img_array.shape) == 3:
-                        # Assume bands are in order B2, B3, B4, B8
-                        # But thumbnail might only have RGB (3 channels)
+                    
                         if img_array.shape[2] == 3:
-                            # We only got RGB, need to fetch NIR separately
                             logger.warning(f"      Method 3: Only got RGB from thumbnail")
                         else:
                             result_array = np.moveaxis(img_array[:, :, :4], 2, 0).astype(np.float32)
-                            # Scale back from 8-bit (0-255) to reflectance (0-10000)
                             result_array = (result_array / 255.0) * 3000.0
                             
                             if np.max(result_array) > 0:
