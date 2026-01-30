@@ -1,3 +1,4 @@
+'''
 # ╔═══════════════════════════════════════════════════════════════════════════╗
 # ║  AI-DRIVEN AGRICULTURAL FIELD MONITORING SYSTEM                            ║
 # ║  Map View Component                                                        ║
@@ -359,3 +360,4 @@ def render_data_availability(availability: list, season: str = 'Rice') -> None:
         """
     
     st.markdown(html_boxes + "</div></div>", unsafe_allow_html=True)
+'''

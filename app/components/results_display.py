@@ -1,3 +1,4 @@
+'''
 # ╔═══════════════════════════════════════════════════════════════════════════╗
 # ║  AI-DRIVEN AGRICULTURAL FIELD MONITORING SYSTEM                            ║
 # ║  Results Display Component                                                 ║
@@ -457,3 +458,4 @@ def render_no_data_state() -> None:
         </p>
     </div>
     """, unsafe_allow_html=True)
+'''

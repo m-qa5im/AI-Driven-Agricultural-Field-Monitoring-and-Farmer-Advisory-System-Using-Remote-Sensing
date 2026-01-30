@@ -41,7 +41,7 @@ st.markdown("""
         display: none !important;
     }
 
-    [data-testid="collapsedControl"] {
+    /* [data-testid="collapsedControl"] {
         display: flex !important;
         visibility: visible !important;
         z-index: 999999 !important;
@@ -58,6 +58,7 @@ st.markdown("""
         fill: white !important;
         color: white !important;
     }
+    */
 
     .main .block-container {
         padding-top: 4rem !important;
@@ -784,7 +785,7 @@ with st.sidebar:
 st.markdown("""
 <div class="main-header">
     <h1>🌾 Agriculture Field Monitoring & Advisory System </h1>
-    <p class="subtitle">AI-Powered Crop Classification, Health Assessment & Smart Planning for Pakistani Farmers</p>
+    <p class="subtitle">AI Driven Agricultural Field Monitoring and Farmer Advisory System Using Remote Sensing</p>
     <span class="badge">✨ Powered by Deep Learning & Satellite Imagery</span>
 </div>
 """, unsafe_allow_html=True) 
@@ -892,7 +893,7 @@ with left_col:
         st.session_state['selected_lat'] = lat
         st.session_state['selected_lon'] = lon
     
-    # ═══ FIXED: Validation OUTSIDE the if/else blocks ═══
+    # ═══  Validation OUTSIDE the if/else blocks ═══
     is_valid = GEEConfig.is_in_punjab(lat, lon)
     if is_valid:
         st.markdown(f"""
@@ -946,8 +947,8 @@ with left_col:
     
     # Advanced Options
     with st.expander("🔧 Advanced Options", expanded=False):
-        use_tta = st.checkbox("Enable Test-Time Augmentation", value=True, key="tta")
-        season_validation = st.checkbox("Enable Season Validation", value=True, key="season_val")
+        use_tta = st.checkbox("Enable Test-Time Augmentation", value=False, key="tta")
+        season_validation = st.checkbox("Enable Season Validation", value=False, key="season_val")
     
     st.markdown("<br>", unsafe_allow_html=True)
     
@@ -1375,64 +1376,138 @@ with right_col:
                     st.code(traceback.format_exc())
 
         
+        # ═══════════════════════════════════════════════════════════════════════════
+# MODIFIED WEEKLY PLANNER MODULE - REPLACE IN YOUR STREAMLIT APP
+# ═══════════════════════════════════════════════════════════════════════════
+# 
+# INSTRUCTIONS:
+# Replace the entire "WEEKLY PLANNER MODULE" section in your Streamlit app
+# (starting from "elif module == '📅 Weekly Planner':")
+# with the code below
+#
+# ═══════════════════════════════════════════════════════════════════════════
+
         # ─────────────────────────────────────────────────────────────────
         # WEEKLY PLANNER MODULE
         # ─────────────────────────────────────────────────────────────────
         elif module == "📅 Weekly Planner":
             with st.spinner("📅 Generating weekly plan..."):
                 try:
+                    from gee_fetcher import GEEFetcher
                     from weather_service import WeatherService
-                    from weekly_planner import WeeklyPlanner  # Make sure this imports the FIXED version
+                    from weekly_planner import WeeklyPlanner
+                    from health_assessment import assess_crop_health
                     
                     progress_bar = st.progress(0)
+                    status_text = st.empty()
+                    
+                    # ═══════════════════════════════════════════════════════════════
+                    # STEP 1: Fetch Satellite Data (same as Health Assessment)
+                    # ═══════════════════════════════════════════════════════════════
+                    status_text.markdown("*Connecting to Google Earth Engine...*")
+                    progress_bar.progress(10)
+                    
+                    fetcher = GEEFetcher(PathConfig.GEE_SERVICE_ACCOUNT_KEY)
+                    
+                    status_text.markdown("*Fetching Sentinel-2 imagery...*")
+                    progress_bar.progress(25)
+                    
+                    data = fetcher.fetch_temporal_stack(lat, lon, datetime.combine(analysis_date, datetime.min.time()))
+                    
+                    # ═══════════════════════════════════════════════════════════════
+                    # STEP 2: Calculate Vegetation Indices (Real-time)
+                    # ═══════════════════════════════════════════════════════════════
+                    status_text.markdown("*Calculating vegetation indices...*")
+                    progress_bar.progress(40)
+                    
+                    mask = data['availability_mask']
+                    stack = data['image_stack']
+                    
+                    # Find last available month (same logic as Health Assessment)
+                    last_idx = -1
+                    for i in range(5, -1, -1):
+                        if mask[i] == 1:
+                            last_idx = i
+                            break
+                    
+                    if last_idx == -1:
+                        st.markdown("""
+                        <div class="error-alert">
+                            <strong>❌ No Satellite Data Available</strong><br>
+                            No satellite data available for this location/date. Try a different date or location.
+                        </div>
+                        """, unsafe_allow_html=True)
+                        st.stop()
+                    
+                    # Extract bands for the most recent available month
+                    start_ch = last_idx * 4
+                    band_data = stack[start_ch:start_ch + 4].copy()
+                    
+                    # Validate data quality
+                    if np.max(band_data) == 0:
+                        st.markdown("""
+                        <div class="warning-alert">
+                            <strong>⚠️ Limited Data Quality</strong><br>
+                            Satellite data appears to have low signal. Results may be less accurate.
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    # Calculate health assessment (which includes all vegetation indices)
+                    health_result = assess_crop_health(
+                        band_data=band_data, 
+                        crop=planner_crop,
+                        already_scaled=True
+                    )
+                    
+                    # Extract vegetation indices from health assessment
+                    indices = health_result['indices']
+                    ndvi = indices['ndvi']['mean']
+                    evi = indices['evi']['mean']
+                    savi = indices['savi']['mean']
+                    gndvi = indices['gndvi']['mean']
+                    ndwi = indices['ndwi']['mean']
+                    
+                    progress_bar.progress(55)
+                    
+                    # ═══════════════════════════════════════════════════════════════
+                    # STEP 3: Get Weather Forecast
+                    # ═══════════════════════════════════════════════════════════════
+                    status_text.markdown("*Fetching weather forecast...*")
                     
                     weather = WeatherService.get_forecast(lat, lon, 7)
-                    progress_bar.progress(30)
+                    progress_bar.progress(70)
                     
                     # ═══════════════════════════════════════════════════════════════
-                    # ✅ NEW: Get vegetation indices from health assessment
+                    # STEP 4: Generate Weekly Plan with Real Vegetation Indices
                     # ═══════════════════════════════════════════════════════════════
-                    ndvi = 0.45  # Default if no health assessment
-                    evi = 0.42
-                    ndwi = 0.0
-                    gndvi = 0.43
-                    savi = 0.44
+                    status_text.markdown("*Generating personalized plan...*")
                     
-                    if 'health_result' in st.session_state and st.session_state['health_result']:
-                        # Extract indices from health assessment
-                        indices = st.session_state['health_result']['indices']
-                        ndvi = indices['ndvi']['mean']
-                        evi = indices['evi']['mean']
-                        ndwi = indices['ndwi']['mean']
-                        gndvi = indices['gndvi']['mean']
-                        savi = indices['savi']['mean']
-                    
-                    progress_bar.progress(50)
-                    
-                    # ═══════════════════════════════════════════════════════════════
-                    # ✅ FIXED: Pass vegetation indices instead of health_status
-                    # ═══════════════════════════════════════════════════════════════
                     planner = WeeklyPlanner(planner_crop, lat, lon)
                     plan = planner.generate_weekly_plan(
                         last_irrigation=last_irrigation.strftime('%Y-%m-%d'),
                         last_fertilizer=last_fertilizer.strftime('%Y-%m-%d'),
                         weather_forecast=weather['forecast'],
-                        ndvi=ndvi,      # ✅ REQUIRED
-                        evi=evi,        # ✅ Recommended
-                        ndwi=ndwi,      # ✅ Recommended (water stress)
-                        gndvi=gndvi,    # ✅ Recommended (nutrients)
-                        savi=savi       # Optional
+                        ndvi=ndvi,      # ✅ Real-time calculated
+                        evi=evi,        # ✅ Real-time calculated
+                        ndwi=ndwi,      # ✅ Real-time calculated (water stress)
+                        gndvi=gndvi,    # ✅ Real-time calculated (nutrients)
+                        savi=savi       # ✅ Real-time calculated
                     )
+                    
                     progress_bar.progress(100)
+                    status_text.empty()
                     progress_bar.empty()
                     
                     # ═══════════════════════════════════════════════════════════════
-                    # ✅ UPDATED: Use new plan structure with health_assessment
+                    # Display Results (Rest of the code remains the same)
                     # ═══════════════════════════════════════════════════════════════
                     
                     # Header - Show health status from assessment
                     health_status = plan['health_assessment']['status']
                     health_label = plan['health_assessment'].get('label', health_status)
+                    
+                    # Add data quality indicator
+                    data_quality_text = f"Based on {data['months_available']}/6 months satellite data"
                     
                     st.markdown(f"""
                     <div class="success-alert">
@@ -1441,6 +1516,24 @@ with right_col:
                         <span style="margin-top: 8px; display: inline-block;">
                             Health: {health_label} (NDVI: {plan['health_assessment']['ndvi']:.3f})
                         </span>
+                        <br>
+                        <span style="margin-top: 4px; display: inline-block; font-size: 12px; color: #6b7280;">
+                            📡 {data_quality_text}
+                        </span>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Show all calculated indices in an info box
+                    st.markdown(f"""
+                    <div class="info-alert" style="margin-top: 12px;">
+                        <strong>📊 Real-time Vegetation Indices</strong><br>
+                        <div style="margin-top: 8px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; font-size: 12px;">
+                            <div>NDVI: <strong>{ndvi:.3f}</strong></div>
+                            <div>EVI: <strong>{evi:.3f}</strong></div>
+                            <div>SAVI: <strong>{savi:.3f}</strong></div>
+                            <div>GNDVI: <strong>{gndvi:.3f}</strong></div>
+                            <div>NDWI: <strong>{ndwi:.3f}</strong></div>
+                        </div>
                     </div>
                     """, unsafe_allow_html=True)
                     
@@ -1452,7 +1545,7 @@ with right_col:
                         irr_date = irr['best_day']['date_formatted'] if irr['best_day'] else 'Not needed'
                         irr_day = irr['best_day']['day_name'] if irr['best_day'] else ''
                         
-                        # ✅ UPDATED: Use new urgency levels
+                        # Use new urgency levels
                         health_urgency = irr.get('health_urgency', 'normal')
                         
                         if health_urgency == 'immediate':
@@ -1495,7 +1588,7 @@ with right_col:
                         fert_day = fert['best_day']['day_name'] if fert['best_day'] else ''
                         fert_type = fert['recommended_type'][:30] if fert['recommended_type'] else 'None'
                         
-                        # ✅ UPDATED: Use new urgency levels
+                        # urgency levels
                         fert_urgency = fert.get('health_urgency', 'none')
                         
                         if fert_urgency == 'urgent':
@@ -1530,14 +1623,12 @@ with right_col:
                     
                     st.markdown("<br>", unsafe_allow_html=True)
                     
-                    # ═══════════════════════════════════════════════════════════════
-                    # ✅ NEW: Show key recommendations from health assessment
-                    # ═══════════════════════════════════════════════════════════════
+                    # Key recommendations from health assessment
                     if plan.get('key_recommendations'):
                         st.markdown("##### 🎯 Key Recommendations")
                         for rec in plan['key_recommendations']:
                             st.markdown(f"""
-                            <div style="padding: 8px 12px; background: #fef3c7; border-left: 4px solid #f59e0b; 
+                            <div style="padding: 8px 12px; background: #000000; border-left: 4px solid #f59e0b; 
                                         border-radius: 6px; margin-bottom: 8px; font-size: 14px;">
                                 {rec}
                             </div>
@@ -1555,7 +1646,7 @@ with right_col:
                         is_best_fert = day['date'] == best_fert_date
                         is_best = is_best_irr or is_best_fert
                         
-                        # ✅ UPDATED: Handle new recommendation types
+                        # new recommendation types
                         row_class = "best-day" if is_best else ""
                         if day['priority'] == 'urgent':
                             row_class = "urgent"
@@ -1582,7 +1673,7 @@ with right_col:
                             if day['fertilizer'].get('urgency_level') == 'urgent':
                                 fert_badge = '<span class="deadline-badge">URGENT</span>'
                         
-                        # ✅ UPDATED: Handle 'not_possible' recommendation
+                        #  Handle 'not_possible' recommendation
                         if day['irrigation']['recommendation'] == 'not_possible':
                             irr_text = '<span style="color: #dc2626; font-weight: 600;">⛔ Too soon</span>'
                         elif day['irrigation']['recommendation'] == 'irrigate':
@@ -1594,7 +1685,7 @@ with right_col:
                         else:
                             irr_text = '<span style="color: #9ca3af;">◽ No action</span>'
                         
-                        # ✅ UPDATED: Handle fertilizer 'not_possible'
+                        # Handle fertilizer 'not_possible'
                         if day['fertilizer']['recommendation'] == 'not_possible':
                             fert_text = '<span style="color: #dc2626; font-weight: 600;">⛔ Too soon</span>'
                         elif day['fertilizer']['recommendation'] in ['apply', 'urgent']:
